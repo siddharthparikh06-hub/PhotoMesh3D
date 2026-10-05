@@ -1,5 +1,6 @@
 import cv2
 from pathlib import Path
+import shutil
 
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
@@ -12,12 +13,15 @@ def calculate_blur_score(image):
     return cv2.Laplacian(gray, cv2.CV_64F).var()
 
 
-def validate_images(folder_path):
+def validate_images(folder_path, output_folder):
     folder = Path(folder_path)
+    output_folder = Path(output_folder)
 
     if not folder.exists():
-        print("Folder does not exist:", folder)
+        print("Input folder does not exist:", folder)
         return
+
+    output_folder.mkdir(parents=True, exist_ok=True)
 
     image_files = [
         file for file in folder.iterdir()
@@ -34,7 +38,8 @@ def validate_images(folder_path):
 
     print("Image Validation Report")
     print("-----------------------")
-    print("Folder:", folder)
+    print("Input folder:", folder)
+    print("Output folder:", output_folder)
     print("Images found:", len(image_files))
     print("Blur threshold:", BLUR_THRESHOLD)
     print()
@@ -57,6 +62,9 @@ def validate_images(folder_path):
             )
             blurry_images += 1
         else:
+            destination = output_folder / image_file.name
+            shutil.copy2(image_file, destination)
+
             print(
                 f"VALID    | {image_file.name} | "
                 f"{width}x{height} | Score: {blur_score:.2f}"
@@ -73,4 +81,7 @@ def validate_images(folder_path):
 
 
 if __name__ == "__main__":
-    validate_images("data/raw/images")
+    validate_images(
+        "data/raw/images",
+        "data/processed/validated_images"
+    )
